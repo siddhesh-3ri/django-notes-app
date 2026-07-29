@@ -1,29 +1,38 @@
-@Library('Shared')_
-pipeline{
-    agent { label 'dev-server'}
-    
-    stages{
-        stage("Code clone"){
-            steps{
-                sh "whoami"
-            clone("https://github.com/LondheShubham153/django-notes-app.git","main")
+pipeline {
+    agent { label 'linux' }   // Change 'linux' if your agent has a different label
+
+    environment {
+        IMAGE_NAME = "siddxszx/django-notes-app"
+        IMAGE_TAG  = "latest"
+    }
+
+    stages {
+
+        stage('Checkout Code') {
+            steps {
+                checkout scm
             }
         }
-        stage("Code Build"){
-            steps{
-            dockerbuild("notes-app","latest")
+
+        stage('Verify Workspace') {
+            steps {
+                sh 'pwd'
+                sh 'ls -la'
             }
         }
-        stage("Push to DockerHub"){
-            steps{
-                dockerpush("dockerHubCreds","notes-app","latest")
+
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                '''
             }
         }
-        stage("Deploy"){
-            steps{
-                deploy()
+
+        stage('Verify Image') {
+            steps {
+                sh 'docker images'
             }
         }
-        
     }
 }
